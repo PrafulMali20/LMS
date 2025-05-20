@@ -25,7 +25,7 @@ import {
 import PurchaseCourseProtectedRoute from "./components/PurchaseCourseProtectedRoute";
 import { ThemeProvider } from "./components/ThemeProvider";
 
-axios.get(`${process.env.REACT_APP_API_URL}/api/something`)
+
 
 const appRouter = createBrowserRouter([
   {
