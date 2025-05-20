@@ -16,6 +16,7 @@ import EditLecture from "./pages/admin/lecture/EditLecture";
 import CourseDetail from "./pages/student/CourseDetail";
 import CourseProgress from "./pages/student/CourseProgress";
 import SearchPage from "./pages/student/SearchPage";
+import axios from "axios";
 import {
   AdminRoute,
   AuthenticatedUser,
@@ -23,6 +24,8 @@ import {
 } from "./components/ProtectedRoutes";
 import PurchaseCourseProtectedRoute from "./components/PurchaseCourseProtectedRoute";
 import { ThemeProvider } from "./components/ThemeProvider";
+
+axios.get(`${process.env.REACT_APP_API_URL}/api/something`)
 
 const appRouter = createBrowserRouter([
   {
