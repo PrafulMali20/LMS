@@ -22,9 +22,20 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-    origin:"https://learnifys.onrender.com/",
-    credentials:true
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+    //   "http://localhost:5173",
+      "https://learnifys.onrender.com",
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
 }));
+
  
 // apis
 app.use("/api/v1/media", mediaRoute);
