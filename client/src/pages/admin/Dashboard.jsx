@@ -10,12 +10,12 @@ const Dashboard = () => {
   if(isLoading) return <h1>Loading...</h1>
   if(isError) return <h1 className="text-red-500">Failed to get purchased course</h1>
 
-  //
-  const {purchasedCourse} = data || [];
+  // Use a safe fallback for purchasedCourse
+  const purchasedCourse = data?.purchasedCourse || [];
 
   const courseData = purchasedCourse.map((course)=> ({
-    name:course.courseId.courseTitle,
-    price:course.courseId.coursePrice
+    name:course.courseId?.courseTitle || "Unknown",
+    price:course.courseId?.coursePrice || 0
   }))
 
   const totalRevenue = purchasedCourse.reduce((acc,element) => acc+(element.amount || 0), 0);

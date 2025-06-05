@@ -1,4 +1,3 @@
- 
 import { Course } from "../models/course.model.js";
 import { Lecture } from "../models/lecture.model.js";
 import {deleteMediaFromCloudinary, deleteVideoFromCloudinary, uploadMedia} from "../utils/cloudinary.js";
@@ -32,22 +31,30 @@ export const createCourse = async (req,res) => {
 
 export const searchCourse = async (req,res) => {
     try {
+        console.log("REQ QUERY:", req.query); // Debug log
         const {query = "", categories = [], sortByPrice =""} = req.query;
-        console.log(categories);
-        
         // create search query
-        const searchCriteria = {
-            isPublished:true,
-            $or:[
+        const searchCriteria = { isPublished:true };
+
+        let orConditions = [];
+        // If query is provided, search in title, subtitle, or category
+        if (query && query.trim() !== "") {
+            orConditions.push(
                 {courseTitle: {$regex:query, $options:"i"}},
                 {subTitle: {$regex:query, $options:"i"}},
-                {category: {$regex:query, $options:"i"}},
-            ]
+                {category: {$regex:query, $options:"i"}}
+            );
         }
-
         // if categories selected
-        if(categories.length > 0) {
-            searchCriteria.category = {$in: categories};
+        let categoryArray = categories;
+        if (typeof categories === 'string' && categoryArray.length > 0) {
+            categoryArray = categoryArray.split(',');
+        }
+        if(Array.isArray(categoryArray) && categoryArray.length > 0) {
+            orConditions.push({ category: { $in: categoryArray } });
+        }
+        if (orConditions.length > 0) {
+            searchCriteria.$or = orConditions;
         }
 
         // define sorting order
@@ -67,7 +74,10 @@ export const searchCourse = async (req,res) => {
 
     } catch (error) {
         console.log(error);
-        
+        return res.status(500).json({
+            success: false,
+            message: "Failed to search courses"
+        });
     }
 }
 
@@ -337,3 +347,51 @@ export const togglePublishCourse = async (req,res) => {
         })
     }
 }
+
+export const getCategories = async (req, res) => {
+    try {
+        const categories = await Course.distinct("category", { isPublished: true });
+        if (!categories || !Array.isArray(categories)) {
+            return res.status(200).json({ categories: [] });
+        }
+        return res.status(200).json({ categories });
+    } catch (error) {
+        console.log("getCategories error:", error);
+        res.status(200).json({ categories: [] }); // Always return an array, never 500
+    }
+};
+
+export const removeCourse = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+        // Find the course
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return res.status(404).json({ message: "Course not found!" });
+        }
+        // Remove all lectures associated with the course
+        if (Array.isArray(course.lectures) && course.lectures.length > 0) {
+            for (const lectureId of course.lectures) {
+                await Lecture.findByIdAndDelete(lectureId);
+            }
+        }
+        // Remove all course purchases
+        const { CoursePurchase } = await import("../models/coursePurchase.model.js");
+        await CoursePurchase.deleteMany({ courseId });
+        // Remove all course progress
+        const { CourseProgress } = await import("../models/courseProgress.js");
+        await CourseProgress.deleteMany({ courseId });
+        // Remove course from users' enrolledCourses
+        const { User } = await import("../models/user.model.js");
+        await User.updateMany(
+            { enrolledCourses: courseId },
+            { $pull: { enrolledCourses: courseId } }
+        );
+        // Remove the course itself
+        await Course.findByIdAndDelete(courseId);
+        return res.status(200).json({ message: "Course removed successfully." });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Failed to remove course" });
+    }
+};

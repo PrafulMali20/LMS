@@ -153,7 +153,7 @@ const CourseProgress = () => {
                   {isLectureCompleted(lecture._id) && (
                     <Badge
                       variant={"outline"}
-                      className="bg-green-200 text-green-600"
+                      className="bg-green-800 text-white"
                     >
                       Completed
                     </Badge>

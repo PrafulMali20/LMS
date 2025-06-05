@@ -1,7 +1,7 @@
 import {createApi, fetchBaseQuery} from "@reduxjs/toolkit/query/react";
 import { userLoggedIn, userLoggedOut } from "../authSlice";
 
-const USER_API = "https://lms-5krz.onrender.com/api/v1/user/"
+const USER_API = "http://localhost:8080/api/v1/user/"
 
 export const authApi = createApi({
     reducerPath:"authApi",
@@ -44,8 +44,7 @@ export const authApi = createApi({
                     console.log(error);
                 }
             }
-        }),
-        loadUser: builder.query({
+        }),        loadUser: builder.query({
             query: () => ({
                 url:"profile",
                 method:"GET"
@@ -55,7 +54,12 @@ export const authApi = createApi({
                     const result = await queryFulfilled;
                     dispatch(userLoggedIn({user:result.data.user}));
                 } catch (error) {
-                    console.log(error);
+                    // Only log errors that are not 401 (unauthorized)
+                    if (error.error?.status !== 401) {
+                        console.log('Error loading user:', error);
+                    }
+                    // Ensure user is logged out on any error
+                    dispatch(userLoggedOut());
                 }
             }
         }),

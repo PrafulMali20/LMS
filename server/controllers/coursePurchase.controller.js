@@ -60,6 +60,13 @@ export const createCheckoutSession = async (req, res) => {
     newPurchase.paymentId = session.id;
     await newPurchase.save();
 
+    // Enroll the user in the course immediately after purchase creation
+    await User.findByIdAndUpdate(
+      userId,
+      { $addToSet: { enrolledCourses: courseId } },
+      { new: true }
+    );
+
     return res.status(200).json({
       success: true,
       url: session.url, // Return the Stripe checkout URL
@@ -162,11 +169,18 @@ export const getCourseDetailWithPurchaseStatus = async (req, res) => {
   }
 };
 
-export const getAllPurchasedCourse = async (_, res) => {
+export const getAllPurchasedCourse = async (req, res) => {
   try {
-    const purchasedCourse = await CoursePurchase.find({
-      status: "completed",
-    }).populate("courseId");
+    // Find the user to check their role
+    const user = await User.findById(req.id);
+    let purchasedCourse;
+    if (user && user.role === "instructor") {
+      // Admin/instructor: return all purchases
+      purchasedCourse = await CoursePurchase.find({ status: "completed" }).populate("courseId");
+    } else {
+      // Student: return only their purchases
+      purchasedCourse = await CoursePurchase.find({ status: "completed", userId: req.id }).populate("courseId");
+    }
     if (!purchasedCourse) {
       return res.status(404).json({
         purchasedCourse: [],
@@ -177,5 +191,6 @@ export const getAllPurchasedCourse = async (_, res) => {
     });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };

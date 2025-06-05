@@ -23,12 +23,14 @@ import {
 } from "./ui/sheet";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
-import { useLogoutUserMutation } from "@/features/api/authApi";
+import { useLogoutUserMutation, useLoadUserQuery } from "@/features/api/authApi";
 import { toast } from "sonner";
 import { useSelector } from "react-redux";
 
 const Navbar = () => {
   const { user } = useSelector((store) => store.auth);
+  // Only fetch user if not already present
+  useLoadUserQuery(undefined, { skip: !!user });
   const [logoutUser, { data, isSuccess }] = useLogoutUserMutation();
   const navigate = useNavigate();
   const logoutHandler = async () => {

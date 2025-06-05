@@ -15,7 +15,7 @@ dotenv.config({});
 connectDB();
 const app = express();
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // default middleware
 app.use(express.json());
@@ -24,7 +24,7 @@ app.use(cookieParser());
 app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = [
-    //   "http://localhost:5173",
+      "http://localhost:5173",
       "https://learnifys.onrender.com",
     ];
     if (!origin || allowedOrigins.includes(origin)) {

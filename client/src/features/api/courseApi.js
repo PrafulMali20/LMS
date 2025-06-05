@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const COURSE_API = "https://lms-5krz.onrender.com/api/v1/course";
+const COURSE_API = "http://localhost:8080/api/v1/course";
 
 export const courseApi = createApi({
   reducerPath: "courseApi",
@@ -113,11 +113,25 @@ export const courseApi = createApi({
         method: "PATCH",
       }),
     }),
+    getCategories: builder.query({
+      query: () => ({
+        url: "/categories",
+        method: "GET",
+      }),
+    }),
+    removeCourse: builder.mutation({
+      query: (courseId) => ({
+        url: `/${courseId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Refetch_Creator_Course"],
+    }),
   }),
 });
 export const {
   useCreateCourseMutation,
   useGetSearchCourseQuery,
+  useLazyGetSearchCourseQuery,
   useGetPublishedCourseQuery,
   useGetCreatorCourseQuery,
   useEditCourseMutation,
@@ -128,4 +142,6 @@ export const {
   useRemoveLectureMutation,
   useGetLectureByIdQuery,
   usePublishCourseMutation,
+  useGetCategoriesQuery,
+  useRemoveCourseMutation,
 } = courseApi;

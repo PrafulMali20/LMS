@@ -10,47 +10,50 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useGetCategoriesQuery } from "@/features/api/courseApi";
 
-const categories = [
-  { id: "nextjs", label: "Next JS" },
-  { id: "data science", label: "Data Science" },
-  { id: "frontend development", label: "Frontend Development" },
-  { id: "fullstack development", label: "Fullstack Development" },
-  { id: "mern stack development", label: "MERN Stack Development" },
-  { id: "backend development", label: "Backend Development" },
-  { id: "javascript", label: "Javascript" },
-  { id: "python", label: "Python" },
-  { id: "docker", label: "Docker" },
-  { id: "mongodb", label: "MongoDB" },
-  { id: "html", label: "HTML" },
-];
+const Filter = ({ handleFilterChange, selectedCategories, sortByPrice }) => {
+  const { data: categoryData, isLoading: isCategoryLoading } = useGetCategoriesQuery();
+  const categories = categoryData?.categories || [];
 
-const Filter = ({ handleFilterChange }) => {
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [sortByPrice, setSortByPrice] = useState("");
+  // Restore static categories list
+  const staticCategories = [
+    "Next JS",
+    "Data Science",
+    "Frontend Development",
+    "Fullstack Development",
+    "MERN Stack Development",
+    "Backend Development",
+    "Javascript",
+    "Python",
+    "Docker",
+    "MongoDB",
+    "HTML",
+  ];
 
+  // When a category is toggled, update parent state to trigger backend fetch
   const handleCategoryChange = (categoryId) => {
-    setSelectedCategories((prevCategories) => {
-      const newCategories = prevCategories.includes(categoryId)
-        ? prevCategories.filter((id) => id !== categoryId)
-        : [...prevCategories, categoryId];
-
-      handleFilterChange(newCategories, sortByPrice); // Update parent component with new categories
-      return newCategories;
-    });
+    let newCategories;
+    if (selectedCategories.includes(categoryId)) {
+      newCategories = selectedCategories.filter((id) => id !== categoryId);
+    } else {
+      newCategories = [...selectedCategories, categoryId];
+    }
+    // Always call parent handler to trigger backend fetch
+    handleFilterChange(newCategories, sortByPrice);
   };
 
+  // When sort is changed, update parent state to trigger backend fetch
   const selectByPriceHandler = (selectedValue) => {
-    setSortByPrice(selectedValue);
-    handleFilterChange(selectedCategories, selectedValue); // Update parent component with new sort value
+    handleFilterChange(selectedCategories, selectedValue);
   };
 
   return (
     <div className="w-full md:w-[20%]">
       <div className="flex items-center justify-between">
         <h1 className="font-semibold text-lg md:text-xl">Filter Options</h1>
-        <Select onValueChange={selectByPriceHandler}>
+        <Select value={sortByPrice} onValueChange={selectByPriceHandler}>
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
@@ -64,18 +67,16 @@ const Filter = ({ handleFilterChange }) => {
         </Select>
       </div>
       <Separator className="my-4" />
-      <div>
-        <h1 className="font-semibold mb-2">CATEGORY</h1>
-        {categories.map((category) => (
-          <div key={category.id} className="flex items-center space-x-2 my-2">
+      <div className="space-y-2">
+        <h2 className="font-semibold text-md">Category</h2>
+        {staticCategories.map((category) => (
+          <div key={category} className="flex items-center gap-2">
             <Checkbox
-              id={category.id}
-              checked={selectedCategories.includes(category.id)} // Directly bind checked state
-              onCheckedChange={() => handleCategoryChange(category.id)} // Toggle category state
+              id={category}
+              checked={selectedCategories.includes(category)}
+              onCheckedChange={() => handleCategoryChange(category)}
             />
-            <Label htmlFor={category.id} className="text-sm font-medium leading-none">
-              {category.label}
-            </Label>
+            <Label htmlFor={category}>{category}</Label>
           </div>
         ))}
       </div>

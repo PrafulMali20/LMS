@@ -13,7 +13,8 @@ import { useGetCourseDetailWithStatusQuery } from "@/features/api/purchaseApi";
 import { BadgeInfo, Lock, PlayCircle } from "lucide-react";
 import React from "react";
 import ReactPlayer from "react-player";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { useLoadUserQuery } from "@/features/api/authApi";
 
 const CourseDetail = () => {
   const params = useParams();
@@ -21,6 +22,8 @@ const CourseDetail = () => {
   const navigate = useNavigate();
   const { data, isLoading, isError } =
     useGetCourseDetailWithStatusQuery(courseId);
+  const { data: userData } = useLoadUserQuery();
+  const userRole = userData?.user?.role;
 
   if (isLoading) return <h1>Loading...</h1>;
   if (isError) return <h>Failed to load course details</h>;
@@ -29,15 +32,21 @@ const CourseDetail = () => {
   console.log(purchased);
 
   const handleContinueCourse = () => {
-    if(purchased){
-      navigate(`/course-progress/${courseId}`)
+    if (purchased) {
+      navigate(`/course-progress/${courseId}`);
     }
-  }
+  };
 
   return (
     <div className="space-y-5">
       <div className="bg-[#2D2F31] text-white">
         <div className="max-w-7xl mx-auto py-8 px-4 md:px-8 flex flex-col gap-2">
+          <Link
+            to="/"
+            className="text-blue-400 hover:underline text-sm mb-2"
+          >
+            ← Back to Courses
+          </Link>
           <h1 className="font-bold text-2xl md:text-3xl">
             {course?.courseTitle}
           </h1>
@@ -52,7 +61,12 @@ const CourseDetail = () => {
             <BadgeInfo size={16} />
             <p>Last updated {course?.createdAt.split("T")[0]}</p>
           </div>
-          <p>Students enrolled: {course?.enrolledStudents.length}</p>
+          <p>
+            Students enrolled:{" "}
+            {Array.isArray(course?.enrolledStudents)
+              ? course.enrolledStudents.length
+              : 0}
+          </p>
         </div>
       </div>
       <div className="max-w-7xl mx-auto my-5 px-4 md:px-8 flex flex-col lg:flex-row justify-between gap-10">
@@ -92,14 +106,37 @@ const CourseDetail = () => {
               </div>
               <h1>Lecture title</h1>
               <Separator className="my-2" />
-              <h1 className="text-lg md:text-xl font-semibold">Course Price</h1>
+              <h1 className="text-lg md:text-xl font-semibold">
+                Course Price: ₹{course.coursePrice || 0}
+              </h1>
             </CardContent>
-            <CardFooter className="flex justify-center p-4">
-              {purchased ? (
-                <Button onClick={handleContinueCourse} className="w-full">Continue Course</Button>
-              ) : (
-                <BuyCourseButton courseId={courseId} />
+            <CardFooter className="flex flex-col gap-2 justify-center p-4">
+              {/* Admin/Instructor: Show price, then edit and lecture links */}
+              {userRole === "instructor" && (
+                <>
+                  <Link
+                    to={`/admin/course/${course._id}`}
+                    className="text-blue-600 hover:underline text-sm mb-2"
+                  >
+                    Edit Course
+                  </Link>
+                  <Link
+                    to={`/admin/course/${course._id}/lecture`}
+                    className="text-blue-600 hover:underline text-sm mb-2"
+                  >
+                    Manage Lectures
+                  </Link>
+                </>
               )}
+              {/* Student: Show purchase/continue logic */}
+              {userRole !== "instructor" &&
+                (purchased ? (
+                  <Button onClick={handleContinueCourse} className="w-full">
+                    Continue Course
+                  </Button>
+                ) : (
+                  <BuyCourseButton courseId={courseId} />
+                ))}
             </CardFooter>
           </Card>
         </div>
