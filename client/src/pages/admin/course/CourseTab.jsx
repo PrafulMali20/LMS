@@ -40,6 +40,7 @@ const CourseTab = () => {
     courseThumbnail: "",
   });
 
+
   const params = useParams();
   const courseId = params.courseId;
   const { data: courseByIdData, isLoading: courseByIdLoading , refetch} =
